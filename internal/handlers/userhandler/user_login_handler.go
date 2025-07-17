@@ -5,52 +5,46 @@ import (
 	"ApiMarketplace/internal/service/userservice"
 	"ApiMarketplace/internal/store/postgres"
 	"context"
+	"errors"
 	"net/http"
 	"time"
 )
 
-type HandlerRegisterUser struct {
-	Service userservice.UserRegister
+type HandlerLoginUser struct {
+	Service userservice.UserLogin
 }
 
-func NewHandlerRegister(regServ userservice.UserRegister) *HandlerRegisterUser {
-	return &HandlerRegisterUser{Service: regServ}
+func NewLoginHandler(loginServ userservice.UserLogin) *HandlerLoginUser {
+	return &HandlerLoginUser{Service: loginServ}
 }
 
-func (h *HandlerRegisterUser) RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
-	// Создаём контекст с таймаутом 20 секунд
+func (h *HandlerLoginUser) LoginUserHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
-
 	if r.Method != http.MethodPost {
 		boundary.WriteResponseErr(w, 405, boundary.ErrorResponse{
 			ErrorCode: "MethodNotAllowed",
-			Message:   "Only POST method is allowed.",
+			Message:   "Only POST method is allowed",
 		})
 		return
 	}
-
 	var userReq boundary.UserRequest
-	err := boundary.DecodeJSONBody(r, &userReq)
-	if err != nil {
+	if err := boundary.DecodeJSONBody(r, &userReq); err != nil {
 		boundary.WriteResponseErr(w, 400, boundary.ErrorResponse{
-			ErrorCode: "StatusBadRequest",
-			Message:   "Invalid syntax",
+			ErrorCode: "BadRequest",
+			Message:   "Invalid request syntax",
 		})
 		return
 	}
-
-	err = boundary.UserValidate(userReq)
-	if err != nil {
+	if err := boundary.UserValidate(userReq); err != nil {
 		boundary.WriteResponseErr(w, 400, boundary.ErrorResponse{
 			ErrorCode: "ValidationError",
 			Message:   err.Error(),
 		})
 		return
 	}
-
-	regUserMaping := boundary.RegisterUserMaping(userReq)
-	responseData, err := h.Service.Register(ctx, regUserMaping)
+	loginUserMaping := boundary.LoginUserMaping(userReq)
+	responseData, err := h.Service.UserLogin(ctx, loginUserMaping)
 
 	select {
 	case <-ctx.Done():
@@ -61,10 +55,10 @@ func (h *HandlerRegisterUser) RegisterUserHandler(w http.ResponseWriter, r *http
 		return
 	default:
 		if err != nil {
-			if err == postgres.ErrUserAlreadyExists {
-				boundary.WriteResponseErr(w, 409, boundary.ErrorResponse{
-					ErrorCode: "UserAlreadyExists",
-					Message:   "Conflict: User with this username already exists.",
+			if errors.Is(err, postgres.ErrUserNotFound) {
+				boundary.WriteResponseErr(w, 404, boundary.ErrorResponse{
+					ErrorCode: "UserNotFound",
+					Message:   "User with this username not found",
 				})
 				return
 			}
@@ -75,9 +69,9 @@ func (h *HandlerRegisterUser) RegisterUserHandler(w http.ResponseWriter, r *http
 			return
 		}
 
-		boundary.WriteResponseSuccess(w, 200, boundary.SuccessResponse{
+		boundary.WriteResponseSuccess(w, 201, boundary.SuccessResponse{
 			ResponseData: responseData,
-			Message:      "User successfully created",
+			Message:      "User successfully logged in",
 		})
 	}
 }

@@ -3,7 +3,8 @@ package main
 import (
 	"ApiMarketplace/internal/config"
 	"ApiMarketplace/internal/handlers/userhandler"
-	"ApiMarketplace/internal/servise/userservice"
+	"ApiMarketplace/internal/service/userservice"
+
 	"ApiMarketplace/internal/store/db"
 	"ApiMarketplace/internal/store/postgres"
 	"fmt"
@@ -28,9 +29,13 @@ func main() {
 	}
 	userRepo := postgres.NewUserPostgres(db)
 	userService := userservice.NewUserService(userRepo)
-	userHandler := userhandler.NewHandlerRegister(userService)
+	userRegisterHandler := userhandler.NewHandlerRegister(userService)
+
+	userLoginHandler := userhandler.NewLoginHandler(userService)
+	//
 	http.HandleFunc("/", ServerHandler)
-	http.HandleFunc("/register", userHandler.RegisterUserHandler)
+	http.HandleFunc("/register", userRegisterHandler.RegisterUserHandler)
+	http.HandleFunc("/login", userLoginHandler.LoginUserHandler)
 	fmt.Println("Server running on http://localhost:8080")
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

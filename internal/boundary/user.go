@@ -15,6 +15,9 @@ type RegisterUserResponse struct {
 	ID    int    `json:"id"`
 	Login string `json:"login"`
 }
+type LoginUserResponse struct {
+	JwtToken string `json:"authtoken"`
+}
 
 // Кастомные ошибки
 var (
@@ -68,6 +71,24 @@ func RegisterUserMaping(userReq UserRequest) domain.RegisterUserInternal {
 		Password: userReq.Password,
 	}
 }
+func LoginUserMaping(userReq UserRequest) domain.LoginUserInternal {
+	return domain.LoginUserInternal{
+		Username: userReq.Username,
+		Password: userReq.Password,
+	}
+}
+func LoginUserDbMaping(userReq domain.LoginUserInternal) domain.LoginUserDB {
+	return domain.LoginUserDB{
+		Username: userReq.Username,
+	}
+}
+func LoginUserResponseMapping(token string) LoginUserResponse {
+	return LoginUserResponse{JwtToken: token}
+}
+
+// func RegisterUserHashMapping(passwordHash string) domain.RegisterUserInternal {
+// 	return domain.RegisterUserInternal{Password: passwordHash}
+// }
 
 func RegisterUserDbMaping(userReq domain.RegisterUserInternal) domain.RegisterUserDB {
 	return domain.RegisterUserDB{
@@ -80,12 +101,6 @@ func UserValidate(userReq UserRequest) error {
 	if userReq.Username == "" || userReq.Password == "" {
 		return ErrEmptyLoginPassword
 	}
-	if len(userReq.Username) < 5 || len(userReq.Username) > 20 {
-		return ErrUsernameLength
-	}
-	if len(userReq.Password) < 9 {
-		return ErrPasswordLength
-	}
 	if isOnlySpacesOrUnderscores(userReq.Username) {
 		return ErrUsernameSpaces
 	}
@@ -95,5 +110,12 @@ func UserValidate(userReq UserRequest) error {
 	if !registerRegexp.MatchString(userReq.Username) {
 		return ErrUsernameInvalidChars
 	}
+	if len(userReq.Username) < 5 || len(userReq.Username) > 20 {
+		return ErrUsernameLength
+	}
+	if len(userReq.Password) < 9 {
+		return ErrPasswordLength
+	}
+
 	return nil
 }

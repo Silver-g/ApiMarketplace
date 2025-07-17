@@ -7,7 +7,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var ErrPasswordHashing = errors.New(consts.ErrPasswordHashingMsg)
+var (
+	ErrPasswordHashing   = errors.New(consts.ErrPasswordHashingMsg)
+	ErrIncorrectPassword = errors.New(consts.ErrIncorrectPasswordMsg)
+)
 
 // для регистрации
 func HashPassword(password string) (string, error) {
@@ -20,5 +23,9 @@ func HashPassword(password string) (string, error) {
 
 // для логина
 func ComparePassword(hashedPassword, password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	if err != nil {
+		return ErrIncorrectPassword
+	}
+	return nil
 }
