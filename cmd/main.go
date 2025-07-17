@@ -1,7 +1,13 @@
 package main
 
 import (
+	"ApiMarketplace/internal/config"
+	"ApiMarketplace/internal/handlers/userhandler"
+	"ApiMarketplace/internal/servise/userservice"
+	"ApiMarketplace/internal/store/db"
+	"ApiMarketplace/internal/store/postgres"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -11,8 +17,20 @@ func ServerHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	var err error
+	err = config.InitConfig(".env")
+	if err != nil {
+		log.Fatal("Ошибка загрузки .env файла")
+	}
 
+	db, err := db.ConnectDB()
+	if err != nil {
+		log.Fatal("Не удалось открыть соединение с базой данных")
+	}
+	userRepo := postgres.NewUserPostgres(db)
+	userService := userservice.NewUserService(userRepo)
+	userHandler := userhandler.NewHandlerRegister(userService)
 	http.HandleFunc("/", ServerHandler)
+	http.HandleFunc("/register", userHandler.RegisterUserHandler)
 	fmt.Println("Server running on http://localhost:8080")
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
