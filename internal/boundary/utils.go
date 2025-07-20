@@ -9,7 +9,7 @@ type ErrorResponse struct {
 	ErrorCode string `json:"error"`
 	Message   string `json:"message"`
 }
-type SuccessResponse struct { //допущение не забудь сделать для каждого ендпоинта свою
+type SuccessResponse struct {
 	ResponseData interface{} `json:"data"`
 	Message      string      `json:"message"`
 }

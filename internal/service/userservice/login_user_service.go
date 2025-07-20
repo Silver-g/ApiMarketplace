@@ -9,13 +9,13 @@ import (
 )
 
 type UserLogin interface {
-	UserLogin(ctx context.Context, loginData domain.LoginUserInternal) (boundary.LoginUserResponse, error)
+	UserLogin(ctx context.Context, loginData *domain.LoginUserInternal) (boundary.LoginUserResponse, error)
 }
 
-func (s *UserService) UserLogin(ctx context.Context, loginData domain.LoginUserInternal) (boundary.LoginUserResponse, error) {
+func (s *UserService) UserLogin(ctx context.Context, loginData *domain.LoginUserInternal) (boundary.LoginUserResponse, error) {
 	var err error
 	var loginToken boundary.LoginUserResponse
-	dbLoginData := boundary.LoginUserDbMaping(loginData)
+	dbLoginData := boundary.LoginUserDbMaping(*loginData)
 	userData, err := s.userRepo.LoginByUsername(ctx, &dbLoginData)
 	if err != nil {
 		if err == postgres.ErrUserNotFound {

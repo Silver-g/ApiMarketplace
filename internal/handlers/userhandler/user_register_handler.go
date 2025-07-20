@@ -18,7 +18,7 @@ func NewHandlerRegister(regServ userservice.UserRegister) *HandlerRegisterUser {
 }
 
 func (h *HandlerRegisterUser) RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
-	// Создаём контекст с таймаутом 20 секунд
+	//  контекст с таймаутом 20 секунд
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 
@@ -50,7 +50,7 @@ func (h *HandlerRegisterUser) RegisterUserHandler(w http.ResponseWriter, r *http
 	}
 
 	regUserMaping := boundary.RegisterUserMaping(userReq)
-	responseData, err := h.Service.Register(ctx, regUserMaping)
+	responseData, err := h.Service.Register(ctx, &regUserMaping)
 
 	select {
 	case <-ctx.Done():
@@ -75,7 +75,7 @@ func (h *HandlerRegisterUser) RegisterUserHandler(w http.ResponseWriter, r *http
 			return
 		}
 
-		boundary.WriteResponseSuccess(w, 200, boundary.SuccessResponse{
+		boundary.WriteResponseSuccess(w, 201, boundary.SuccessResponse{
 			ResponseData: responseData,
 			Message:      "User successfully created",
 		})

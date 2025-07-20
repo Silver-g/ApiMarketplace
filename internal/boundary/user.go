@@ -12,7 +12,7 @@ type UserRequest struct {
 	Password string `json:"password"`
 }
 type RegisterUserResponse struct {
-	ID    int    `json:"id"`
+	Id    int    `json:"id"`
 	Login string `json:"login"`
 }
 type LoginUserResponse struct {
@@ -29,16 +29,25 @@ var (
 	ErrUsernameInvalidChars = errors.New(consts.ErrUsernameInvalidCharsMsg)
 )
 
-// регулярка разрешены латинские буквы цифры подчеркивания
+// регулярка разрешены латинские буквы цифры подчеркивания (опциональное решение)
 var registerRegexp = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 
 //var registerRegexp = regexp.MustCompile(`^[a-zA-Zа-яА-Я0-9_]+$`) опционально
 
 // Набор запрещённых символов
-var prohibitedChars = map[rune]struct{}{
-	'\'': {}, '"': {}, ';': {}, '\\': {}, '`': {}, '=': {},
-	'(': {}, ')': {}, '{': {}, '}': {}, '[': {}, ']': {},
-}
+// var prohibitedChars = map[rune]struct{}{
+// 	'\'': {}, '"': {}, ';': {}, '\\': {}, '`': {}, '=': {},
+// 	'(': {}, ')': {}, '{': {}, '}': {}, '[': {}, ']': {},
+// }
+
+// func containsProhibitedChars(s string) bool { // опциональное решение аналог регулярки
+// 	for _, ch := range s {
+// 		if _, exists := prohibitedChars[ch]; exists {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
 
 func isOnlySpacesOrUnderscores(s string) bool {
 	for _, ch := range s {
@@ -49,18 +58,9 @@ func isOnlySpacesOrUnderscores(s string) bool {
 	return true
 }
 
-func containsProhibitedChars(s string) bool {
-	for _, ch := range s {
-		if _, exists := prohibitedChars[ch]; exists {
-			return true
-		}
-	}
-	return false
-}
-
-func RegisterUserResponseMaping(userReq domain.RegisterUserDB) RegisterUserResponse {
+func RegisterUserResponseMaping(userReq domain.RegisterUserDb) RegisterUserResponse {
 	return RegisterUserResponse{
-		ID:    userReq.Id,
+		Id:    userReq.Id,
 		Login: userReq.Username,
 	}
 }
@@ -77,8 +77,8 @@ func LoginUserMaping(userReq UserRequest) domain.LoginUserInternal {
 		Password: userReq.Password,
 	}
 }
-func LoginUserDbMaping(userReq domain.LoginUserInternal) domain.LoginUserDB {
-	return domain.LoginUserDB{
+func LoginUserDbMaping(userReq domain.LoginUserInternal) domain.LoginUserDb {
+	return domain.LoginUserDb{
 		Username: userReq.Username,
 	}
 }
@@ -86,12 +86,8 @@ func LoginUserResponseMapping(token string) LoginUserResponse {
 	return LoginUserResponse{JwtToken: token}
 }
 
-// func RegisterUserHashMapping(passwordHash string) domain.RegisterUserInternal {
-// 	return domain.RegisterUserInternal{Password: passwordHash}
-// }
-
-func RegisterUserDbMaping(userReq domain.RegisterUserInternal) domain.RegisterUserDB {
-	return domain.RegisterUserDB{
+func RegisterUserDbMaping(userReq domain.RegisterUserInternal) domain.RegisterUserDb {
+	return domain.RegisterUserDb{
 		Username:     userReq.Username,
 		PasswordHash: userReq.Password,
 	}
@@ -104,9 +100,9 @@ func UserValidate(userReq UserRequest) error {
 	if isOnlySpacesOrUnderscores(userReq.Username) {
 		return ErrUsernameSpaces
 	}
-	if containsProhibitedChars(userReq.Username) {
-		return ErrUsernameProhibited
-	}
+	// if containsProhibitedChars(userReq.Username) { // на случай если вдруг будем менять регулярку
+	// 	return ErrUsernameProhibited
+	// }
 	if !registerRegexp.MatchString(userReq.Username) {
 		return ErrUsernameInvalidChars
 	}

@@ -4,7 +4,7 @@ type RegisterUserInternal struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
-type RegisterUserDB struct {
+type RegisterUserDb struct {
 	Id           int    `json:"id"`
 	Username     string `json:"username"`
 	PasswordHash string `json:"hashpassword"`

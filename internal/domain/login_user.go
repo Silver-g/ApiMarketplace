@@ -6,7 +6,7 @@ type LoginUserInternal struct {
 	Password     string `json:"password"`
 	PasswordHash string `json:"hashpassword"`
 }
-type LoginUserDB struct {
+type LoginUserDb struct {
 	Username string `json:"login"`
 }
 type LoginUserResponseDb struct {

@@ -1,27 +1,34 @@
-package userhandler
+package adshandler
 
 import (
 	"ApiMarketplace/internal/boundary"
-	"ApiMarketplace/internal/service/userservice"
-	"ApiMarketplace/internal/store/postgres"
+	"ApiMarketplace/internal/service/adsservice"
 	"context"
-	"errors"
 	"net/http"
 	"time"
 )
 
-type HandlerLoginUser struct {
-	Service userservice.UserLogin
+type HandlerCreateAds struct {
+	Service adsservice.CreateAdsService
 }
 
-func NewLoginHandler(loginServ userservice.UserLogin) *HandlerLoginUser {
-	return &HandlerLoginUser{Service: loginServ}
+func NewHandlerCreateAds(createAdsServ adsservice.CreateAdsService) *HandlerCreateAds {
+	return &HandlerCreateAds{Service: createAdsServ}
 }
 
-func (h *HandlerLoginUser) LoginUserHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HandlerCreateAds) CreateAdsHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
+	userId, ok := r.Context().Value("user_id").(int)
+	if !ok {
+		boundary.WriteResponseErr(w, 500, boundary.ErrorResponse{
+			ErrorCode: "InternalError",
+			Message:   "Failed to get user Id from context",
+		})
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		boundary.WriteResponseErr(w, 405, boundary.ErrorResponse{
 			ErrorCode: "MethodNotAllowed",
@@ -29,8 +36,8 @@ func (h *HandlerLoginUser) LoginUserHandler(w http.ResponseWriter, r *http.Reque
 		})
 		return
 	}
-	var userReq boundary.UserRequest
-	err = boundary.DecodeJSONBody(r, &userReq)
+	var adsCreateReq boundary.CreateAdsRequest
+	err = boundary.DecodeJSONBody(r, &adsCreateReq)
 	if err != nil {
 		boundary.WriteResponseErr(w, 400, boundary.ErrorResponse{
 			ErrorCode: "BadRequest",
@@ -38,7 +45,7 @@ func (h *HandlerLoginUser) LoginUserHandler(w http.ResponseWriter, r *http.Reque
 		})
 		return
 	}
-	err = boundary.UserValidate(userReq)
+	err = boundary.ValidateCreateAdsRequest(adsCreateReq)
 	if err != nil {
 		boundary.WriteResponseErr(w, 400, boundary.ErrorResponse{
 			ErrorCode: "ValidationError",
@@ -46,9 +53,10 @@ func (h *HandlerLoginUser) LoginUserHandler(w http.ResponseWriter, r *http.Reque
 		})
 		return
 	}
-	loginUserMaping := boundary.LoginUserMaping(userReq)
-	responseData, err := h.Service.UserLogin(ctx, &loginUserMaping)
-
+	//
+	createAdsMaping := boundary.CreateAdsMaping(adsCreateReq, userId)
+	responseData, err := h.Service.CreateAds(ctx, &createAdsMaping)
+	//
 	select {
 	case <-ctx.Done():
 		boundary.WriteResponseErr(w, 504, boundary.ErrorResponse{
@@ -58,13 +66,6 @@ func (h *HandlerLoginUser) LoginUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	default:
 		if err != nil {
-			if errors.Is(err, postgres.ErrUserNotFound) {
-				boundary.WriteResponseErr(w, 404, boundary.ErrorResponse{
-					ErrorCode: "UserNotFound",
-					Message:   "User with this username not found",
-				})
-				return
-			}
 			boundary.WriteResponseErr(w, 500, boundary.ErrorResponse{
 				ErrorCode: "InternalError",
 				Message:   err.Error(),
@@ -72,9 +73,10 @@ func (h *HandlerLoginUser) LoginUserHandler(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		boundary.WriteResponseSuccess(w, 200, boundary.SuccessResponse{
+		boundary.WriteResponseSuccess(w, 201, boundary.SuccessResponse{
 			ResponseData: responseData,
-			Message:      "User successfully logged in",
+			Message:      "Ad successfully created",
 		})
 	}
+
 }

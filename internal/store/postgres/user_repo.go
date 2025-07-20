@@ -22,7 +22,7 @@ var (
 	ErrUserNotFound      = errors.New(consts.ErrUserNotFoundMsg)
 )
 
-func (r *UserPostgres) LoginByUsername(ctx context.Context, username *domain.LoginUserDB) (*domain.LoginUserResponseDb, error) {
+func (r *UserPostgres) LoginByUsername(ctx context.Context, username *domain.LoginUserDb) (*domain.LoginUserResponseDb, error) {
 	var dbLoginResponse domain.LoginUserResponseDb
 	query := "SELECT id, password_hash FROM users WHERE login = $1"
 	err := r.db.QueryRowContext(ctx, query, username.Username).Scan(&dbLoginResponse.Id, &dbLoginResponse.PasswordHash)
@@ -36,7 +36,7 @@ func (r *UserPostgres) LoginByUsername(ctx context.Context, username *domain.Log
 	return &dbLoginResponse, nil
 }
 
-func (r *UserPostgres) CreateUser(ctx context.Context, userData *domain.RegisterUserDB) (*boundary.RegisterUserResponse, error) {
+func (r *UserPostgres) CreateUser(ctx context.Context, userData *domain.RegisterUserDb) (*boundary.RegisterUserResponse, error) {
 
 	query := "INSERT INTO users (login, password_hash) VALUES ($1, $2) ON CONFLICT (login) DO NOTHING RETURNING id"
 	err := r.db.QueryRowContext(ctx, query, userData.Username, userData.PasswordHash).Scan(&userData.Id)

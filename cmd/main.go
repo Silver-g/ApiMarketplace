@@ -2,7 +2,10 @@ package main
 
 import (
 	"ApiMarketplace/internal/config"
+	"ApiMarketplace/internal/handlers"
+	"ApiMarketplace/internal/handlers/adshandler"
 	"ApiMarketplace/internal/handlers/userhandler"
+	"ApiMarketplace/internal/service/adsservice"
 	"ApiMarketplace/internal/service/userservice"
 
 	"ApiMarketplace/internal/store/db"
@@ -28,14 +31,25 @@ func main() {
 		log.Fatal("Не удалось открыть соединение с базой данных")
 	}
 	userRepo := postgres.NewUserPostgres(db)
+	adsRepo := postgres.NewAdsPostgres(db)
+	adsService := adsservice.NewAdsService(adsRepo)
+	getAdsListHandlet := adshandler.NewHandlerGetAdsList(adsService)
+	adsCreateHandler := adshandler.NewHandlerCreateAds(adsService)
 	userService := userservice.NewUserService(userRepo)
 	userRegisterHandler := userhandler.NewHandlerRegister(userService)
 
 	userLoginHandler := userhandler.NewLoginHandler(userService)
+
+	var router handlers.RouteInfo
+	router.CreateAdsHandler = adsCreateHandler
+	router.GetAdsListHandler = getAdsListHandlet
+	handlerRouter := &router
 	//
 	http.HandleFunc("/", ServerHandler)
 	http.HandleFunc("/register", userRegisterHandler.RegisterUserHandler)
 	http.HandleFunc("/login", userLoginHandler.LoginUserHandler)
+	http.Handle("/ads", handlerRouter)
+
 	fmt.Println("Server running on http://localhost:8080")
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

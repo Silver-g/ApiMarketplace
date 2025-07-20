@@ -9,7 +9,7 @@ import (
 )
 
 type UserRegister interface {
-	Register(ctx context.Context, user domain.RegisterUserInternal) (*boundary.RegisterUserResponse, error)
+	Register(ctx context.Context, user *domain.RegisterUserInternal) (*boundary.RegisterUserResponse, error)
 }
 type UserService struct {
 	userRepo repository.UserRepository
@@ -18,13 +18,13 @@ type UserService struct {
 func NewUserService(repo repository.UserRepository) *UserService {
 	return &UserService{userRepo: repo}
 }
-func (s *UserService) Register(ctx context.Context, user domain.RegisterUserInternal) (*boundary.RegisterUserResponse, error) {
+func (s *UserService) Register(ctx context.Context, user *domain.RegisterUserInternal) (*boundary.RegisterUserResponse, error) {
 	hashedPassword, err := security.HashPassword(user.Password)
 	if err != nil {
 		return nil, err
 	}
 	user.Password = hashedPassword
-	CreateUserData := boundary.RegisterUserDbMaping(user)
+	CreateUserData := boundary.RegisterUserDbMaping(*user)
 	createdUser, err := s.userRepo.CreateUser(ctx, &CreateUserData)
 	if err != nil {
 		return nil, err

@@ -11,7 +11,7 @@ type regUserCase struct {
 }
 
 func TestUserValidate(t *testing.T) {
-	tests := []regUserCase{
+	cases := []regUserCase{
 		{
 			name:    "ValidInput",
 			input:   UserRequest{Username: "_validuser_", Password: "password123"},
@@ -59,11 +59,11 @@ func TestUserValidate(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tests {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := UserValidate(tc.input)
 			if err != tc.wantErr {
-				t.Errorf("UserValidate() error = %v, wantErr %v", err, tc.wantErr)
+				t.Errorf("UserValidate error = %v, wantErr %v", err, tc.wantErr)
 			}
 		})
 	}
