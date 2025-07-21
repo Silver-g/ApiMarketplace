@@ -24,7 +24,10 @@ func (s *AdsService) AdsList(ctx context.Context, adsListData *domain.AdsListInt
 
 	var items []boundary.AdsListItemResponse
 	for _, ad := range responseAdsListDbData {
-		isOwner := adsListData.UserId == ad.UserId
+		var isOwner bool
+		if adsListData.UserId == ad.UserId {
+			isOwner = true
+		}
 		item := boundary.AdsListItemResponseMapping(*ad, isOwner)
 		items = append(items, item)
 	}
@@ -36,12 +39,11 @@ func BuildAdsListQuery(params *domain.AdsListInternal, offset int) string {
 	query := `SELECT ads.id, ads.user_id, users.login, ads.title, ads.description, ads.image_url, ads.price, COUNT(ads.id) OVER() AS total_records
 	          FROM ads
 	          JOIN users ON ads.user_id = users.id`
-	if params.MinPrice != nil {
+	if params.MinPrice != nil && params.MaxPrice != nil {
 		query += fmt.Sprintf(" WHERE ads.price >= %d", *params.MinPrice)
-	}
-	if params.MaxPrice != nil {
 		query += fmt.Sprintf(" AND ads.price <= %d", *params.MaxPrice)
 	}
+
 	query += fmt.Sprintf(" ORDER BY %s %s", params.SortType, params.SortOrder)
 	if params.Limit > 0 {
 		query += fmt.Sprintf(" LIMIT %d", params.Limit)

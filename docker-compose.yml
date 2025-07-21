@@ -1,0 +1,55 @@
+
+services:
+  database:
+    image: postgres:15
+    container_name: marketplace_db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d ${DB_NAME} -U ${DB_USER}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - app_net
+    restart: always
+
+  migrate:
+    image: migrate/migrate
+    container_name: migrate
+    volumes:
+      - ./migrations:/migrations
+    command:
+      ["-path", "/migrations", "-database", "postgres://postgres:Admin@database:5432/marketplace_db?sslmode=disable", "up"]
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - app_net
+
+  app:
+    build:
+      context: .
+    container_name: marketplace_app
+    depends_on:
+      database:
+        condition: service_healthy
+    env_file:
+      - docker.env
+    ports:
+      - "${PORT}:${PORT}"
+    networks:
+      - app_net
+    restart: on-failure
+
+volumes:
+  db-data:
+
+networks:
+  app_net:

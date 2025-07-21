@@ -2,6 +2,7 @@ package userhandler
 
 import (
 	"ApiMarketplace/internal/boundary"
+	"ApiMarketplace/internal/security"
 	"ApiMarketplace/internal/service/userservice"
 	"ApiMarketplace/internal/store/postgres"
 	"context"
@@ -62,6 +63,13 @@ func (h *HandlerLoginUser) LoginUserHandler(w http.ResponseWriter, r *http.Reque
 				boundary.WriteResponseErr(w, 404, boundary.ErrorResponse{
 					ErrorCode: "UserNotFound",
 					Message:   "User with this username not found",
+				})
+				return
+			}
+			if err == security.ErrIncorrectPassword {
+				boundary.WriteResponseErr(w, 401, boundary.ErrorResponse{
+					ErrorCode: "IncorrectPassword",
+					Message:   err.Error(),
 				})
 				return
 			}
