@@ -22,7 +22,8 @@ func (s *AdsService) AdsList(ctx context.Context, adsListData *domain.AdsListInt
 	}
 	totalPage := (totalRecords + adsListData.Limit - 1) / adsListData.Limit
 
-	var items []boundary.AdsListItemResponse
+	items := []*boundary.AdsListItemResponse{} // НАЙДЕННАЯ ОШИБКА
+
 	for _, ad := range responseAdsListDbData {
 		var isOwner bool
 		if adsListData.UserId == ad.UserId {
@@ -32,7 +33,7 @@ func (s *AdsService) AdsList(ctx context.Context, adsListData *domain.AdsListInt
 		items = append(items, item)
 	}
 	adsListResponse := boundary.AdsListResponseMapping(items, adsListData.Page, totalPage)
-	return &adsListResponse, nil
+	return adsListResponse, nil
 }
 
 func BuildAdsListQuery(params *domain.AdsListInternal, offset int) string {
