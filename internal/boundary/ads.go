@@ -29,9 +29,9 @@ type AdsListItemResponse struct {
 }
 
 type AdsListResponse struct {
-	Ads        []AdsListItemResponse `json:"ads"`
-	Page       int                   `json:"page"`
-	TotalPages int                   `json:"total_pages"`
+	Ads        []*AdsListItemResponse `json:"ads"`
+	Page       int                    `json:"page"`
+	TotalPages int                    `json:"total_pages"`
 }
 
 type CreateAdsRequest struct {
@@ -87,8 +87,8 @@ func CreateAdsResponseMaping(createAdsReq domain.CreateAdsDb, adsId int) CreateA
 	}
 }
 
-func AdsListItemResponseMapping(adsListDbData domain.AdsListResponseDb, ownerFlag bool) AdsListItemResponse {
-	return AdsListItemResponse{
+func AdsListItemResponseMapping(adsListDbData domain.AdsListResponseDb, ownerFlag bool) *AdsListItemResponse {
+	return &AdsListItemResponse{
 		Id:          adsListDbData.Id,
 		UserName:    adsListDbData.AuthorLogin,
 		Title:       adsListDbData.Title,
@@ -99,8 +99,8 @@ func AdsListItemResponseMapping(adsListDbData domain.AdsListResponseDb, ownerFla
 	}
 }
 
-func AdsListResponseMapping(items []AdsListItemResponse, page int, totalPage int) AdsListResponse {
-	return AdsListResponse{
+func AdsListResponseMapping(items []*AdsListItemResponse, page int, totalPage int) *AdsListResponse {
+	return &AdsListResponse{
 		Ads:        items,
 		Page:       page,
 		TotalPages: totalPage,
